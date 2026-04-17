@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 
 namespace GarageGroup.Infra;
 
@@ -11,6 +12,14 @@ public static partial class HttpConfigurationExtensions
         : Environment.GetEnvironmentVariable(sectionName + ":" + variableName);
 
     private static TimeSpan? ParseTimeSpan(this string? value)
-        =>
-        string.IsNullOrEmpty(value) ? null : TimeSpan.Parse(value);
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        return TimeSpan.TryParse(value, CultureInfo.InvariantCulture, out var parsedTimeSpan)
+            ? parsedTimeSpan
+            : throw new FormatException($"Invalid TimeSpan value '{value}'.");
+    }
 }

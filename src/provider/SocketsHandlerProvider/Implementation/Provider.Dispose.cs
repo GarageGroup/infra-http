@@ -1,4 +1,4 @@
-﻿using System.Linq;
+﻿using System.Threading;
 
 namespace GarageGroup.Infra;
 
@@ -6,16 +6,16 @@ partial class DefaultSocketsHttpHandlerProvider
 {
     public void Dispose()
     {
-        if (disposed)
+        if (Interlocked.Exchange(ref disposed, 1) is 1)
         {
             return;
         }
 
-        foreach (var handler in namedHandlers.Select(pair => pair.Value))
+        foreach (var handler in namedHandlers.Values)
         {
             handler.Dispose();
         }
 
-        disposed = true;
+        namedHandlers.Clear();
     }
 }

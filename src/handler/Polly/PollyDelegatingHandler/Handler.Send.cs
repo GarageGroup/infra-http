@@ -14,10 +14,6 @@ partial class PollyDelegatingHandler
 
         Task<HttpResponseMessage> InvokeAsync(CancellationToken cancellationToken)
             =>
-            cancellationToken.IsCancellationRequested switch
-            {
-                true => Task.FromCanceled<HttpResponseMessage>(cancellationToken),
-                _ => base.SendAsync(request, cancellationToken)
-            };
+            base.SendAsync(request, cancellationToken);
     }
 }
