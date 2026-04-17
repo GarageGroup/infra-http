@@ -9,7 +9,10 @@ namespace GarageGroup.Infra;
 public static class HttpHandlerDependencyExtensions
 {
     public static Dependency<HttpMessageHandler> UseLogging<THandler>(
-        this Dependency<THandler> sourceDependency, string logCategoryName, HttpLoggerType loggerType = default)
+        this Dependency<THandler> sourceDependency,
+        string logCategoryName,
+        HttpLoggerType loggerType = default,
+        LogLevel logLevel = LogLevel.Information)
         where THandler : HttpMessageHandler
     {
         ArgumentNullException.ThrowIfNull(sourceDependency);
@@ -21,11 +24,15 @@ public static class HttpHandlerDependencyExtensions
             new(
                 innerHandler: innerHandler,
                 logger: serviceProvider.GetRequiredService<ILoggerFactory>().CreateLogger(logCategoryName),
-                loggerType: loggerType);
+                loggerType: loggerType,
+                logLevel: logLevel);
     }
 
     public static Dependency<HttpMessageHandler> UseLogging<THandler>(
-        this Dependency<THandler> sourceDependency, Func<IServiceProvider, ILogger> loggerResolver, HttpLoggerType loggerType = default)
+        this Dependency<THandler> sourceDependency,
+        Func<IServiceProvider, ILogger> loggerResolver,
+        HttpLoggerType loggerType = default,
+        LogLevel logLevel = LogLevel.Information)
         where THandler : HttpMessageHandler
     {
         ArgumentNullException.ThrowIfNull(sourceDependency);
@@ -38,6 +45,7 @@ public static class HttpHandlerDependencyExtensions
             new(
                 innerHandler: innerHandler,
                 logger: loggerResolver.Invoke(serviceProvider),
-                loggerType: loggerType);
+                loggerType: loggerType,
+                logLevel: logLevel);
     }
 }
