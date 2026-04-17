@@ -35,7 +35,7 @@ jobs:
     - name: Push Packages
       if: ${{ github.ref == 'refs/heads/main' }}
       run: >
-        dotnet nuget push "~/nuget/*.nupkg"
+        dotnet nuget push $HOME/nuget/*.nupkg
         -s https://api.nuget.org/v3/index.json
         -k ${{ secrets.NUGET_SECRET }}
         --skip-duplicate
