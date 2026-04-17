@@ -15,9 +15,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '9.0.x'
-
-     # Add NuGet Sources
+        dotnet-version: '10.0.x'
 
     - name: Create Local NuGet Directory
       run: mkdir ~/nuget
@@ -25,75 +23,19 @@ jobs:
     - name: Add Local Nuget Source
       run: dotnet nuget add source ~/nuget
 
-    - name: Add Garage Group NuGet Source
-      run: >
-        dotnet nuget add source ${{ vars.GG_NUGET_SOURCE_URL }}
-        -n garage
-        -u ${{ secrets.GG_NUGET_SOURCE_USER_NAME }}
-        -p ${{ secrets.GG_NUGET_SOURCE_USER_PASSWORD }}
-        --store-password-in-clear-text
+    - name: Restore Infra.Http
+      run: dotnet restore
 
-    # SocketsHandlerProvider.Abstractions
+    - name: Build Infra.Http
+      run: dotnet build --no-restore -c Release
 
-    - name: Restore SocketsHandlerProvider.Abstractions
-      run: dotnet restore ./src/*/*/SocketsHandlerProvider.Abstractions.csproj
-
-    - name: Build SocketsHandlerProvider.Abstractions
-      run: dotnet build ./src/*/*/SocketsHandlerProvider.Abstractions.csproj --no-restore  -c Release
-
-    - name: Pack SocketsHandlerProvider.Abstractions
-      run: dotnet pack ./src/*/*/SocketsHandlerProvider.Abstractions.csproj --no-restore -o ~/nuget  -c Release
-
-    # SocketsHandlerProvider
-
-    - name: Restore SocketsHandlerProvider
-      run: dotnet restore ./src/*/*/SocketsHandlerProvider.csproj
-
-    - name: Build SocketsHandlerProvider
-      run: dotnet build ./src/*/*/SocketsHandlerProvider.csproj --no-restore  -c Release
-
-    - name: Pack SocketsHandlerProvider
-      run: dotnet pack ./src/*/*/SocketsHandlerProvider.csproj --no-restore -o ~/nuget  -c Release
-
-    # Polly
-
-    - name: Restore Polly
-      run: dotnet restore ./src/*/*/Polly.csproj
-
-    - name: Build Polly
-      run: dotnet build ./src/*/*/Polly.csproj --no-restore  -c Release
-
-    - name: Pack Polly
-      run: dotnet pack ./src/*/*/Polly.csproj --no-restore -o ~/nuget  -c Release
-
-    # Cache
-
-    - name: Restore Cache
-      run: dotnet restore ./src/*/*/Cache.csproj
-
-    - name: Build Cache
-      run: dotnet build ./src/*/*/Cache.csproj --no-restore  -c Release
-
-    - name: Pack Cache
-      run: dotnet pack ./src/*/*/Cache.csproj --no-restore -o ~/nuget  -c Release
-
-    # Configurator
-
-    - name: Restore Configurator
-      run: dotnet restore ./src/*/*/Configurator.csproj
-
-    - name: Build Configurator
-      run: dotnet build ./src/*/*/Configurator.csproj --no-restore  -c Release
-
-    - name: Pack Configurator
-      run: dotnet pack ./src/*/*/Configurator.csproj --no-restore -o ~/nuget  -c Release
-
-    # Push
+    - name: Pack Infra.Http
+      run: dotnet pack --no-build -o ~/nuget -c Release
 
     - name: Push Packages
       if: ${{ github.ref == 'refs/heads/main' }}
       run: >
-        dotnet nuget push "../../../nuget/*.nupkg"
-        -s ${{ vars.GG_NUGET_SOURCE_URL }}
-        -k ${{ secrets.GG_NUGET_SOURCE_USER_PASSWORD }}
+        dotnet nuget push "~/nuget/*.nupkg"
+        -s https://api.nuget.org/v3/index.json
+        -k ${{ secrets.NUGET_SECRET }}
         --skip-duplicate

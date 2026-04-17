@@ -44,12 +44,12 @@ partial class InMemoryCacheHttpHandler
         var response = await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
 
         var absoluteExpirationRelativeToNow = response.StatusCode.GetAbsoluteExpirationRelativeToNow(option.ExpirationPerHttpResponseCode);
-        if (absoluteExpirationRelativeToNow != TimeSpan.Zero)
+        if (absoluteExpirationRelativeToNow == TimeSpan.Zero)
         {
             return response;
         }
 
-        var entry = await response.ToCacheEntry();
+        var entry = response.ToCacheEntry();
         TrySetCacheData(key, entry, absoluteExpirationRelativeToNow);
 
         logger?.LogInformation("Cache response for {timeSpan}", absoluteExpirationRelativeToNow);

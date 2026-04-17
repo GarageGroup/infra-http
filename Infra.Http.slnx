@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/handler/">
+    <Project Path="src/handler/Cache/Cache.csproj" />
+    <Project Path="src/handler/Configurator/Configurator.csproj" />
+    <Project Path="src/handler/Polly/Polly.csproj" />
+  </Folder>
+  <Folder Name="/provider/">
+    <Project Path="src/provider/SocketsHandlerProvider.Abstractions/SocketsHandlerProvider.Abstractions.csproj" />
+    <Project Path="src/provider/SocketsHandlerProvider/SocketsHandlerProvider.csproj" />
+  </Folder>
+</Solution>

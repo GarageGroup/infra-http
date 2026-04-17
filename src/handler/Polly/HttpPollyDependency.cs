@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Polly;
 using Polly.Contrib.WaitAndRetry;
@@ -15,6 +16,12 @@ namespace GarageGroup.Infra;
 public static class HttpPollyDependency
 {
     private static readonly TimeSpan StandardMedianFirstRetryDelay = TimeSpan.FromSeconds(1);
+
+    private static readonly TimeSpan TooManyRequestsFallbackDelay = TimeSpan.FromSeconds(15);
+
+    private const int DefaultTransientRetryCount = 5;
+
+    private const int DefaultTooManyRequestsRetryCount = 10;
 
     public static Dependency<HttpMessageHandler> UsePollyStandard(
         this Dependency<HttpMessageHandler> dependency, params HttpStatusCode[] statusCodes)
@@ -102,7 +109,7 @@ public static class HttpPollyDependency
             builder = builder.OrResult(IsStatusCodeRetried);
         }
 
-        var backOffDelay = Backoff.DecorrelatedJitterBackoffV2(StandardMedianFirstRetryDelay, int.MaxValue);
+        var backOffDelay = Backoff.DecorrelatedJitterBackoffV2(StandardMedianFirstRetryDelay, DefaultTransientRetryCount);
         return builder.WaitAndRetryAsync(backOffDelay);
 
         bool IsStatusCodeRetried(HttpResponseMessage response)
@@ -115,7 +122,26 @@ public static class HttpPollyDependency
         Policy.HandleResult<HttpResponseMessage>(
             static r => r.StatusCode is HttpStatusCode.TooManyRequests && r.Headers.RetryAfter is not null)
         .WaitAndRetryAsync(
-            int.MaxValue,
-            static (_, result, _) => result.Result.Headers.RetryAfter?.Delta ?? TimeSpan.FromSeconds(15),
+            DefaultTooManyRequestsRetryCount,
+            static (_, result, _) => ResolveRetryAfter(result.Result.Headers.RetryAfter),
             static (_, _, _, _) => Task.CompletedTask);
+
+    private static TimeSpan ResolveRetryAfter(RetryConditionHeaderValue? retryAfter)
+    {
+        if (retryAfter?.Delta is TimeSpan delta && delta > TimeSpan.Zero)
+        {
+            return delta;
+        }
+
+        if (retryAfter?.Date is DateTimeOffset date)
+        {
+            var dateDelta = date - DateTimeOffset.UtcNow;
+            if (dateDelta > TimeSpan.Zero)
+            {
+                return dateDelta;
+            }
+        }
+
+        return TooManyRequestsFallbackDelay;
+    }
 }

@@ -2,7 +2,7 @@ using System;
 
 namespace GarageGroup.Infra;
 
-public sealed record SocketsHttpHandlerConfiguration : ISocketsHttpHandlerConfiguration
+public sealed record class SocketsHttpHandlerConfiguration : ISocketsHttpHandlerConfiguration
 {
     public string? Name { get; set; }
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Net;
 using System.Net.Http;
 using Microsoft.Extensions.Configuration;
@@ -59,8 +60,17 @@ public static class HttpCacheDependency
                 continue;
             }
 
-            var statusCode = Enum.Parse<HttpStatusCode>(codeSection.Key, ignoreCase: true);
-            expirationPerHttpResponseCode[statusCode] = TimeSpan.Parse(value);
+            if (Enum.TryParse<HttpStatusCode>(codeSection.Key, ignoreCase: true, out var statusCode) is false)
+            {
+                continue;
+            }
+
+            if (TimeSpan.TryParse(value, CultureInfo.InvariantCulture, out var expiration) is false)
+            {
+                continue;
+            }
+
+            expirationPerHttpResponseCode[statusCode] = expiration;
         }
 
         return new()
